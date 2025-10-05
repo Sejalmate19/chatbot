@@ -1,0 +1,382 @@
+import React, { useState, useEffect } from "react";
+import { User } from "@/entities/User";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Save, Plus, X, Target, Briefcase, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+
+export default function ProfilePage() {
+  const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    skills: [],
+    interests: [],
+    experience_level: "",
+    preferred_industries: [],
+    career_goals: ""
+  });
+  const [newSkill, setNewSkill] = useState("");
+  const [newInterest, setNewInterest] = useState("");
+  const [newIndustry, setNewIndustry] = useState("");
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const userData = await User.me();
+      setUser(userData);
+      setFormData({
+        skills: userData.skills || [],
+        interests: userData.interests || [],
+        experience_level: userData.experience_level || "",
+        preferred_industries: userData.preferred_industries || [],
+        career_goals: userData.career_goals || ""
+      });
+    } catch (error) {
+      console.log("Error loading user");
+    }
+  };
+
+  const addItem = (field, value, setter) => {
+    if (value.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: [...(prev[field] || []), value.trim()]
+      }));
+      setter("");
+    }
+  };
+
+  const removeItem = (field, index) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      await User.updateMyUserData(formData);
+      setIsEditing(false);
+      loadUser();
+    } catch (error) {
+      console.error("Error saving profile:", error);
+    }
+  };
+
+  const isEmpty = !formData.skills?.length && !formData.interests?.length && !formData.experience_level;
+
+  return (
+    <div className="min-h-screen p-6 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                My Career Profile
+              </h1>
+              <p className="text-gray-600">
+                Help me understand you better for personalized guidance
+              </p>
+            </div>
+            {!isEditing ? (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 shadow-lg shadow-purple-500/30"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isEmpty ? "Set Up Profile" : "Edit Profile"}
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditing(false);
+                    loadUser();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save
+                </Button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {isEmpty && !isEditing && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16 px-6 rounded-3xl bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200/50 mb-8"
+          >
+            <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-xl shadow-purple-500/30">
+              <Target className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Complete Your Profile
+            </h2>
+            <p className="text-gray-600 max-w-md mx-auto mb-6">
+              Set up your career profile to get personalized recommendations and guidance tailored to your goals
+            </p>
+            <Button
+              onClick={() => setIsEditing(true)}
+              size="lg"
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 shadow-lg shadow-purple-500/30"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Get Started
+            </Button>
+          </motion.div>
+        )}
+
+        <div className="grid gap-6">
+          {/* Experience Level */}
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Briefcase className="w-5 h-5 text-purple-600" />
+                Experience Level
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Select
+                  value={formData.experience_level}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, experience_level: value }))}
+                >
+                  <SelectTrigger className="border-purple-200 focus:border-purple-400">
+                    <SelectValue placeholder="Select your experience level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="entry_level">Entry Level</SelectItem>
+                    <SelectItem value="mid_level">Mid Level</SelectItem>
+                    <SelectItem value="senior">Senior</SelectItem>
+                    <SelectItem value="expert">Expert</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="inline-block">
+                  <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-base px-4 py-2">
+                    {formData.experience_level?.replace('_', ' ').toUpperCase() || "Not specified"}
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Skills */}
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                Skills
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing && (
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addItem('skills', newSkill, setNewSkill);
+                      }
+                    }}
+                    placeholder="Add a skill"
+                    className="border-purple-200 focus:border-purple-400"
+                  />
+                  <Button
+                    onClick={() => addItem('skills', newSkill, setNewSkill)}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.skills?.length > 0 ? (
+                  formData.skills.map((skill, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 border border-purple-200 px-3 py-1.5 text-sm"
+                    >
+                      {skill}
+                      {isEditing && (
+                        <button
+                          onClick={() => removeItem('skills', idx)}
+                          className="ml-2 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-sm">No skills added yet</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Interests */}
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Target className="w-5 h-5 text-purple-600" />
+                Interests
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing && (
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newInterest}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addItem('interests', newInterest, setNewInterest);
+                      }
+                    }}
+                    placeholder="Add an interest"
+                    className="border-purple-200 focus:border-purple-400"
+                  />
+                  <Button
+                    onClick={() => addItem('interests', newInterest, setNewInterest)}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.interests?.length > 0 ? (
+                  formData.interests.map((interest, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="bg-gradient-to-r from-blue-50 to-teal-50 text-blue-700 border border-blue-200 px-3 py-1.5 text-sm"
+                    >
+                      {interest}
+                      {isEditing && (
+                        <button
+                          onClick={() => removeItem('interests', idx)}
+                          className="ml-2 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-sm">No interests added yet</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preferred Industries */}
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Briefcase className="w-5 h-5 text-purple-600" />
+                Preferred Industries
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing && (
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    value={newIndustry}
+                    onChange={(e) => setNewIndustry(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addItem('preferred_industries', newIndustry, setNewIndustry);
+                      }
+                    }}
+                    placeholder="Add an industry"
+                    className="border-purple-200 focus:border-purple-400"
+                  />
+                  <Button
+                    onClick={() => addItem('preferred_industries', newIndustry, setNewIndustry)}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.preferred_industries?.length > 0 ? (
+                  formData.preferred_industries.map((industry, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="bg-gradient-to-r from-teal-50 to-green-50 text-teal-700 border border-teal-200 px-3 py-1.5 text-sm"
+                    >
+                      {industry}
+                      {isEditing && (
+                        <button
+                          onClick={() => removeItem('preferred_industries', idx)}
+                          className="ml-2 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-sm">No industries specified</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Career Goals */}
+          <Card className="border-none shadow-xl bg-white/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-900">
+                <Target className="w-5 h-5 text-purple-600" />
+                Career Goals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isEditing ? (
+                <Textarea
+                  value={formData.career_goals}
+                  onChange={(e) => setFormData(prev => ({ ...prev, career_goals: e.target.value }))}
+                  placeholder="What are your career aspirations? Where do you see yourself in 5 years?"
+                  className="min-h-[120px] border-purple-200 focus:border-purple-400"
+                />
+              ) : (
+                <p className="text-gray-700 leading-relaxed">
+                  {formData.career_goals || "No career goals specified yet"}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

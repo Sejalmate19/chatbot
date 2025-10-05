@@ -1,0 +1,171 @@
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { MessageCircle, User as UserIcon, Target, LogOut, Sparkles } from "lucide-react";
+import { User } from "@/entities/User";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+
+const navigationItems = [
+  {
+    title: "Career Chat",
+    url: createPageUrl("Chat"),
+    icon: MessageCircle,
+  },
+  {
+    title: "My Profile",
+    url: createPageUrl("Profile"),
+    icon: UserIcon,
+  },
+];
+
+export default function Layout({ children }) {
+  const location = useLocation();
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const userData = await User.me();
+      setUser(userData);
+    } catch (error) {
+      console.log("User not loaded");
+    }
+  };
+
+  const handleLogout = async () => {
+    await User.logout();
+  };
+
+  return (
+    <SidebarProvider>
+      <style>{`
+        :root {
+          --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+          --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+          --bg-gradient: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        }
+      `}</style>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 via-purple-50 to-blue-50">
+        <Sidebar className="border-r border-purple-100/50 backdrop-blur-xl bg-white/80">
+          <SidebarHeader className="border-b border-purple-100/50 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="font-bold text-gray-900 text-lg">CareerGuide AI</h2>
+                <p className="text-xs text-gray-500">Your Future, Guided</p>
+              </div>
+            </div>
+          </SidebarHeader>
+          
+          <SidebarContent className="p-3">
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navigationItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton 
+                        asChild 
+                        className={`
+                          hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-blue-500/10 
+                          transition-all duration-300 rounded-xl mb-2 group
+                          ${location.pathname === item.url ? 'bg-gradient-to-r from-purple-500/15 to-blue-500/15 shadow-sm' : ''}
+                        `}
+                      >
+                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                          <item.icon className={`w-5 h-5 transition-colors duration-300 ${
+                            location.pathname === item.url 
+                              ? 'text-purple-600' 
+                              : 'text-gray-400 group-hover:text-purple-500'
+                          }`} />
+                          <span className={`font-medium transition-colors duration-300 ${
+                            location.pathname === item.url 
+                              ? 'text-purple-700' 
+                              : 'text-gray-600 group-hover:text-purple-600'
+                          }`}>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <div className="px-4 py-3 mx-2 rounded-xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-200/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-semibold text-purple-700">Your Journey</span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Every conversation brings you closer to your dream career
+                  </p>
+                </div>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarFooter className="border-t border-purple-100/50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-sm">
+                    {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm truncate">
+                    {user?.full_name || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </SidebarFooter>
+        </Sidebar>
+
+        <main className="flex-1 flex flex-col">
+          <header className="bg-white/50 backdrop-blur-xl border-b border-purple-100/50 px-6 py-4 md:hidden">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="hover:bg-purple-50 p-2 rounded-lg transition-colors duration-200" />
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                CareerGuide AI
+              </h1>
+            </div>
+          </header>
+
+          <div className="flex-1 overflow-auto">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+}
